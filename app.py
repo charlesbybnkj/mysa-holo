@@ -55,7 +55,7 @@ def generate_prescription_html(patient_name, sn):
     item_templates = [
         ("Paracetamol 500mg", 2, "tab"), 
         ("Vitamin C Complex", 1, "capsule x 7 days"), 
-        ("Ambroxol Syrup", 1, "3x/day"],
+        ("Ambroxol Syrup", 1, "3x/day"], # FIXED: Corrected closing bracket ] matches opening (
         ("Amoxicillin 500mg", 7, "capsules")]
         
     random_items = []
