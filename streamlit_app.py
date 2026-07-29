@@ -1,109 +1,240 @@
 import streamlit as st
-from time import sleep
+from datetime import datetime
 import random
+import json
 
-# --- 1. Initialize Session State (Tracks if user is logged in) ---
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False 
-    st.session_state['user_email'] = "" # Store email for display later
+# --- Configuration & Styles (Simulating the UI) ---
+st.set_page_config(page_title="MySAGOv Replica", page_icon="🏥", layout="wide")
 
-# --- 2. Define Custom CSS (Official MySA Gov Look + Holo Effects) ---
-st.markdown("""
+# Custom CSS to mimic the clean, medical look of MySAGOv
+def get_css():
+    return """
     <style>
-        body { background-color: #f4fbf9; font-family: -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif; padding-top: 60px; } 
-        
-        .my-sa-header { text-align: center; color:white; font-size:3rem; letter-spacing: -1.5px; position:relative; z-index:2; top:-50px;} 
-
-        /* The Card Container */
-        .card-wrapper { 
-            max-width: 80%; margin:auto; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,139,79,0.15);
-            display:flex; flex-direction:column; align-items:center; justify-content:center;padding-top:-80px;margin-top:-40px;width:95%}
-            
-        @keyframes holog-shake { 
-            0%,100% { transform: translateX(0) rotateY(0deg); }
-            1%   { transform: translateX(-1px) rotateY(-1deg); }
-            2%   { transform: translateX(2px) rotateY(1deg); }
-            5%   { transform: translateX(-3px) rotateY(-1.5deg); }
-            6%   { transform: translateX(3px) rotateY(1.5deg);}
+        .mylogo { font-weight: bold; color: #0056b3; } /* Approximate brand blue */
+        .prescription-box { 
+            border: 1px solid #e0e0e0; 
+            padding: 20px; 
+            margin-top: 10px; 
+            background-color: #f9fbfd; 
+            border-radius: 8px;
         }
-
-        /* License Card Styles */
-        .license-card { 
-            width: 90%; height: auto; background:#fff; border-radius:8px; overflow:hidden; position:relative; 
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.1), 0 4px 20px rgba(0,139,79,0.2); 
-            animation:holog-shake 6s infinite ease-in-out; transition: all 0.3s;
-        }
-
-        /* Holo Overlay (The "Scanning" Lines) */
-        .holo-scan { 
-            position:absolute; top:-5%; left:-5%; right:-5%; bottom:-5%; border-radius:8px; 
-            background: linear-gradient(rgba(18, 255, 18, 0), rgba(18, 255, 18, 0)), 
-                        repeating-linear-gradient(90deg, transparent, transparent 4%, #fff 4%, #fff 6%),
-                        repeating-linear-gradient(0deg, rgba(255,230,230,.1), rgba(255,230,230,.1) 4px ,transparent); 
-            mix-blend-mode: overlay; pointer-events:none; z-index:10; opacity:0.7; }
-
-        /* License Content (Face + Barcode) */
-        .card-face { padding: 1rem; display:flex; gap:1rem;}
-        .photo-area { width: 90px; height: 110px; background:#eee; border-radius:4px; object-fit:center; position:relative;}
-        .barcode-area { flex-grow:1; text-align:left; font-family:'Consolas', monospace;}
-        
-        #face-img{width:100%;height:100%;object-fit:cover;border-radius:3px;}
-
-        .bar-code-line { color:#008B4F; font-size:.65rem; line-height:1.2; letter-spacing:-1px;}
-        .qr-placeholder { float:right; width:90px;height:auto;background:url('https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=demo') no-repeat center/contain }
-
+        .doctor-btn { background-color: #28a745; color: white; width: 100%; padding: 12px;}
+        .patient-btn { background-color: #0056b3; color: white; width: 100%; padding: 12px;}
+        h1, h2, h3 { font-family: 'Segoe UI', sans-serif; }
     </style>
-""", unsafe_allow_html=True)
+    """
 
-# --- 3. Header (Logo/Title) ---
-st.markdown('<h1 class="my-sa-header">MySA Gov</h1>', unsafe_allow_html=True)
+st.markdown(get_css(), unsafe_allow_html=True)
 
-# --- 4. Main Logic Flow (The "If/Else" Switch) ---
+# --- State Management (Simulating Database) ---
+if "user_type" not in st.session_state:
+    st.session_state.user_type = None
+if "doctor_id" not in st.session_state or patient_data not in st.session_state.get("doctors", {}):
+    if "patient_data" not in st.session_state:
+        # Default Patient Data for Demo Login
+        default_patient = {
+            "name": "Ivanov Ivan Ivanovich", 
+            "sn": "1234567890", 
+            "fio_full": "Иванов Иван Иванович", 
+            "photo_url": "",
+            "address": "",
+            "phone": "+7 (900) 000-00-00",
+            "city": ""
+        }
 
-if not st.session_state['logged_in']:
-    # === LOGIN FORM VIEW ===
-    custom_title = "<h2>Welcome back</h2>" + "<p style='color:#6E7C8C;margin-bottom:2rem;'>Sign in securely using your registered MySA ID credentials.</p>"
-    st.markdown(custom_title, unsafe_allow_html=True)
+# --- Helper Functions ---
+def init_doctor():
+    if st.session_state.doctor_id == None:
+        st.session_state.doctors["D123"] = {"name": "Smirnova Elena Vladimirovna", "specialty": "Therapist"}
 
-    user_email = st.text_input("Email or Mobile Number", key="email")
-    # === LOGIN FORM VIEW (if not logged_in) ===
-    custom_title = "<h2>Welcome back</h2>" + "<p style='color:#6E7C8C;margin-bottom:2rem;'>Sign in securely using your registered MySA ID credentials.</p>"
-    st.markdown(custom_title, unsafe_allow_html=True)
+def get_patient_record(sn):
+    # In a real app, this queries the backend. Here we use session state or defaults.
+    return st.session_state.patient_data
 
-    user_email = st.text_input("Email or Mobile Number", key="email")
+def generate_prescription(patient_fio, sn):
+    timestamp = datetime.now().strftime("%d.%m.%Y")
     
-    if st.button('Sign In', use_container_width=True):
-        if not user_email: # No email entered yet
-            st.error("Please enter your email/mobile number.")
+    items = ["Paracetamol 500mg - 2 tabs", "Vitamin C - 1 capsule x 7 days", "Ambroxol - 5ml x 3 times/day"]
+    random_items = random.sample(items, min(2, len(items)))
+    
+    prescription_html = f"""
+    <div class="prescription-box">
+        <h4 style="margin:0; text-align:center;">E-RECIPE (Электронный рецепт)</h4>
+        <p><strong>Patient:</strong> {patient_fio}</p>
+        <p><strong>ID:</strong> SN-{sn[-8:]}</p> <!-- Shortened for demo -->
+        <hr>
+        <ul>{"".join([f"<li>{i}</li>" for i in random_items])}</ul>
+        <p style="text-align:right;"><em>Date: {timestamp} | Valid until: {datetime.now().year + 1}.12.31</em></p>
+    </div>
+    """
+    return prescription_html
+
+# --- Main Application Logic ---
+
+st.title("🏥 MySAGOv Replica")
+
+# --- Login / Role Selection Screen ---
+if st.session_state.user_type is None:
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("Log in as Patient", key="login_patient"):
+            # Simulating OTP entry (skipping for brevity, defaulting to demo data)
+            otp = st.text_input("Enter SMS Code (Demo): ", placeholder="123456")
             
-        elif len(user_email) < 5: # Optional fallback for short emails (e.g., "abc1")  
-            demo_mail = "demo_user"
-        else: 
-            # Clean up dummy name
-            demo_mail = user_email.split('@')[0] + "@sa.gov.au" 
+            if "OK" == otp or len(otp) > 0: 
+                init_doctor() # Ensure doctor exists so we can switch later
+                st.session_state.patient_data = {
+                    "name": "Ivanov Ivan Ivanovich", 
+                    "sn": "7890123456", 
+                    "fio_full": "Иванов Иван Иванович", 
+                    "photo_url": "",
+                    "address": "",
+                    "phone": "+7 (900) 000-00-00",
+                    "city": ""
+                }
+                st.session_state.user_type = 'patient'
+                
+    with col2:
+        if st.button("Log in as Doctor / Pharmacist", key="login_doctor"):
+            init_doctor()
+            # Simulate doctor login screen briefly or direct access for demo
+            st.session_state.doctor_id = "D123" 
+            st.session_state.patient_data = { # Assume same patient context for demo ease, or separate state later
+                 "name": "Ivanov Ivan Ivanovich", 
+                 "sn": "7890123456", 
+                 "fio_full": "Иванов Иван Иванович", 
+                 "photo_url": "",
+                 "address": "",
+                 "phone": "+7 (900) 000-00-00",
+                 "city": ""
+            }
+            st.session_state.user_type = 'doctor'
 
-# === Simulate Loading/Scanning Effect ===
-for i in range(3): 
-    st.write(f"Authenticating... {i+1}...")
-    sleep(0.5) 
+    st.divider()
 
-# Mark as logged-in and rerun to show dashboard + generated license
-st.session_state['logged_in'] = True
-st.rerun()
-
-
-else: # === DASHBOARD VIEW (Shows Realistic License After Login) ---
-    with st.container(border=False): 
-         custom_title = "<h2>Driver's License Verified ✅</h2>" + "<p style='color:#6E7C8C;margin-bottom:2rem;'>Welcome back, your secure session is active.</p>"
-         st.markdown(custom_title, unsafe_allow_html=True)
-
-        if not user_email or len(user_email) < 5:
-             demo_mail = "demo_user"
+# --- Patient Interface ---
+elif st.session_state.user_type == 'patient':
+    p_data = st.session_state.patient_data
+    
+    # Header Profile Info
+    col_name, _ = st.columns([3, 1])
+    
+    with col_name:
+        if len(p_data.get("name")) > 2: 
+             st.write(f"**{p_data['fio_full']}**")
         else:
-            demo_mail = user_email.split('@')[0] + "@sa.gov.au" # Clean up dummy name
+             st.write("**Patient Name (Demo)**")
+             
+    with col_name[0]: # Placeholder for photo logic if needed
+        
+    c1, c2, c3 = st.columns(3)
+    
+    with c1:
+        s_tab1 = c1.selectbox("View", ["My Profile", "Search Prescriptions"])
+
+    if s_tab1 == "My Profile":
+        p_tabs = st.tabs(["General Info", "Documents"])
+        
+        with p_tabs[0]:
+            st.markdown(f"""
+            <div class="mylogo">Profile Data</div>
+            <ul>
+                <li><strong>Name:</strong> {p_data['fio_full']}</li>
+                <li><strong>ID (SN):</strong> {p_data['sn']}</li> 
+                <li><strong>Phone:</strong> {p_data.get('phone', 'N/A')}</li> 
+                <li><strong>POLIS / E-Karta Status:</strong> Active</li>
+            </ul>
+            """, unsafe_allow_html=True)
+
+        with p_tabs[1]:
+            st.info("In a full replica, this tab would show uploaded scans of physical prescriptions.")
+
+    elif s_tab1 == "Search Prescriptions":
+        query = st.text_input("Enter SN (e.g., 7890123456)")
+        if st.button("Check Validity"):
+            # Simulate API check against the backend database
+            if len(query.strip()) > 0: 
+                status = random.choice(["Valid until Dec 2026", "Expired on Jan 2024"]) 
+                
+                if "Valid" in status:
+                    p_fio = p_data['fio_full']
+                    sn_short = f"{p_data['sn']}"[:6] + "**" # Masking demo
+                    
+                    col_r, _ = st.columns([1,1])
+                    with col_r[0]: 
+                        st.markdown(generate_prescription(p_fio, sn_short))
+                    
+                    with col_r[1]:
+                         st.success("Status: **ACTIVE**")
+                         st.info(f"Seller info would appear here (Pharmacy Name, Address).")
+                else:
+                     st.error("Status: **EXPIRED / NOT FOUND**")
+
+# --- Doctor Interface ---
+elif st.session_state.user_type == 'doctor':
+    init_doctor()
+    d_id = st.session_state.doctor_id
+    
+    # Simple Doctor Dashboard Simulation
+    c1, c2, c3 = st.columns(3)
+    
+    with c1: 
+        s_d_tab = c1.selectbox("Action", ["Issue Prescription", "Verify Patient Data"])
+
+    if s_d_tab == "Issue Prescription":
+        # Simulate selecting patient (in real app, this fetches from registry)
+        selected_patient_name = p_data['fio_full'] + " (" + str(p_data.get('sn','')) + ")"
+        
+        col_s, _ = st.columns([3, 1])
+        with col_s:
+            p_details = st.text(f"Selecting for: **{selected_patient_name}**")
             
-        def generate_realistic_license():
-            """Generates random but consistent attributes to simulate a real SA driver."""
-            
-            first_name = f"{random.choice(['J','M','S','R'])}{random.randint(1,9)}{chr(random.randint(65,87))}" 
-            last_name = "SMITH" 
+            sub_tabs = st.tabs(["Diagnostics", "Prescription Items", "Sign & Send"])
+
+            with sub_tabs[0]:
+                d_text = st.text_area("Diagnosis / Description:", placeholder="e.g. Acute respiratory viral infection...", height=100)
+                
+            with sub_tabs[1]:
+                # Simple list builder simulation
+                items_list = ["Amoxicillin 500mg"]
+                add_item = st.text_input("Add item (Demo): ", key="addmeds") 
+                if add_item and len(add_item) > 0:
+                    items_list.append(add_item)
+                    
+                for idx, i in enumerate(items_list[:-1]): # Show all except the new empty one
+                    st.write(f"- {i}")
+
+            with sub_tabs[2]:
+                st.info("Review signature:")
+                s_sig = st.checkbox("Sign digital prescription")
+                
+                if st.button("Send to Pharmacy Operator", use_container_width=True):
+                    if s_sig:
+                        temp_sn = "D" + p_data['sn'][-6:] # Generate fake SN fragment for demo
+                        
+                        col_res, _ = st.columns(2)
+                        with col_res[0]: 
+                            st.markdown(generate_prescription(p_details.split(' (')[0], f"{p_data['sn']}")) # Simplified call)
+                        
+                        with col_res[1]:
+                             success_msg = """✅ **Success!**
+                             Prescription created.
+                             
+                             - ID: D-7890...
+                             - Status: Sent to Operator (Megafon/MTS/Baikal)
+                             - SMS Code generated."""
+                            
+                             st.info(success_msg)
+
+    elif s_d_tab == "Verify Patient Data":
+        query_sn = st.text_input("Enter Patient SN")
+        if st.button("Find"):
+            if len(query_sn.strip()) > 0:
+                st.success(f"Found record for SN-{query_sn}") 
+                # In real app, load data from backend into session state here
+
+# Footer simulation matching MySAGOv style
+st.divider()
+with st.columns(3):
+    c1,middle,c2= st.columns([1,5,1])
