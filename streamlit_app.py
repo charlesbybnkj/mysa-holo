@@ -51,11 +51,6 @@ st.markdown("""
             
             .btn-login:hover,.btn-login:focus{ background:#E6F3ED;color:black;} 
 
-        /* Footer Links */
-        .footer-links { text-align:right;margin-top:2rem;font-size:0.9rem;padding-right:4%; } 
-        a.link{ color:#6E7C8C;text-decoration:none;font-weight:500;} 
-        a.link:hover { color:#008B4F}
-
     </style>
 """, unsafe_allow_html=True)
 
@@ -70,17 +65,21 @@ with st.container(border=False): # Removes default Streamlit border
 
     user_email = st.text_input("Email or Mobile Number", key="email")
     
-    password = st.password_input("Password", key="pass")
+    # Password field removed as requested - just a visual placeholder to keep the layout looking like an app if needed, 
+    # but we'll make it optional/hidden for simplicity. Or simply leave it out entirely:
+    password = "" 
 
     if st.button('Sign In', use_container_width=True):
         if not user_email and not password:
-            st.error("Please enter both email/mobile and password.")
+            st.error("Please enter your email/mobile number.")
         else:
             # Simulate Loading/Scanning Effect (Replace with real auth later)
             for i in range(3): 
                 st.write(f"Authenticating... {i+1}...")
-                sleep(0.5) # Use 'sleep' instead of time.sleep() for Streamlit compatibility
+                sleep(0.5) 
             
             st.success("Welcome back! Redirecting to dashboard...")
+
+
 
 
