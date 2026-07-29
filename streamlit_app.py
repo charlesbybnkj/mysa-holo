@@ -85,7 +85,7 @@ if not st.session_state['logged_in']:
 # === Simulate Loading/Scanning Effect ===
 for i in range(3): 
     st.write(f"Authenticating... {i+1}...")
-sleep(0.5)
+    sleep(0.5) 
 
 # Mark as logged-in and rerun to show dashboard + generated license
 st.session_state['logged_in'] = True
@@ -107,6 +107,3 @@ else: # === DASHBOARD VIEW (Shows Realistic License After Login) ---
             
             first_name = f"{random.choice(['J','M','S','R'])}{random.randint(1,9)}{chr(random.randint(65,87))}" 
             last_name = "SMITH" 
-            dob_year = str(random.randint(1950, 2004)) + "-" + "".join([str(random.randint(0,9)) for _ in range(2)])+"-" + "".join([str(random.randint(0,9)) for _ in range(2)])
-
-   
