@@ -3,3 +3,5 @@ pandas==2.2.3
 numpy==2.1.3
 beautifulsoup4==4.12.3
 lxml==5.1.0
+html==.5.8.0.1
+python6==4.1.4.7
