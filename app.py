@@ -32,7 +32,8 @@ st.markdown(get_css(), unsafe_allow_html=True)
 
 # --- State Initialization & Defaults ---
 if "user_type" not in st.session_state or st.session_state.user_type is None:
-    # Default Role = None (Welcome Screen)
+    # Default Role = None (Welcome Screen
+    <a>
 
 def init_doctor():
     if "doctors" not in st.session_state or len(st.session_state.doctors) == 0:
@@ -47,7 +48,8 @@ DEFAULT_PATIENT_DATA = {
     "address": "", 
     "phone": "+7 (900) 000-00-00", 
     "city": ""
-}
+}<a/>
+
 
 def generate_prescription_html(patient_name, sn):
     timestamp = datetime.now().strftime("%d.%m.%Y")
@@ -61,7 +63,8 @@ def generate_prescription_html(patient_name, sn):
     random_items = []
     if len(item_templates) > 0:
          random_item = random.choice(random.choice([item_templates[0], item_templates[2]])) 
-
+<button>terminal</button>
+<a>
         prescription_html = f"""
         <div class="prescription-box">
             <h4 style="margin:0; text-align:center;">E-RECIPE (Электронный рецепт)</h4>
@@ -72,7 +75,7 @@ def generate_prescription_html(patient_name, sn):
             <p style="text-align:right;"><em>Date: {timestamp} | Valid until: {(datetime.now() + timedelta(days=90)).strftime("%d.%m.%Y")}</em></p>
         </div>"""
     return prescription_html
-
+</a>
 # --- Main Application Logic ---
 
 st.title("🏥 MySAGOv Replica (Streamlit Demo)")
@@ -81,7 +84,7 @@ st.title("🏥 MySAGOv Replica (Streamlit Demo)")
 if "user_type" not in st.session_state or st.session_state.user_type is None:
     
     col1, col2 = st.columns(2)
-    
+    <button>Terminal</button>
     with col1:
         if st.button("Log in as Patient", key="login_patient"): 
             otp_input = st.text_input("Enter SMS Code (Demo): ", placeholder="e.g. 123456") 
